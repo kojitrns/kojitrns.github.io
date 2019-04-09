@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style type="text/css">
+    body{
+    margin: 0px;
+    padding: 0px;
+    position: relative;
+  }
+  body #wrapper{
+    width: 100%;
+    height: 100%;
+    position: fixed;
+  }
+  </style>
+  <!--- <link rel="stylesheet" type="text/css" href="css/box.css"> -->
+
+  <meta charset="UTF-8">
+  <title>Stars</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script type="text/javascript">
+
+    $(window).keyup(function(e){
+      if(e.keyCode == 38){st_rt[target_star_num]+=Math.PI*(1/108);}
+      else if (e.keyCode == 39) {//right
+        st_col[target_star_num][3]=1.0;
+        target_star_num++;
+        target_star_num%=star_num;
+      }
+      else if (e.keyCode == 37) {//left
+        st_col[target_star_num][3]=1.0;
+        target_star_num--;
+        target_star_num+=star_num;
+        target_star_num%=star_num;
+      }
+      else if (e.keyCode == 40) {// under no rotate
+         st_rt[target_star_num]=0;
+      }
+      else if (e.keyCode == 86) {// v speed up
+        st_v[target_star_num][0]*=1.5;
+        st_v[target_star_num][1]*=1.5;
+      }
+      else if (e.keyCode == 66) {// b speed down
+        st_v[target_star_num][0]*=0.5;
+        st_v[target_star_num][1]*=0.5;
+      }
+      else if (e.keyCode == 83) {// s stop
+        stop=!stop;
+      }
+      else if (e.keyCode == 81) {// q stop rotation
+        rotate_fr=!rotate_fr;
+      }
+      else if (e.keyCode == 68) {// d down up
+        for(var i=0; i<star_num; i++ ) {
+          st_v[i][0]=0; 
+          if(st_v[i][1]<0) st_v[i][1]*=-1;
+        }
+      }
+      else if (e.keyCode == 76) {// l all low speed
+        for(var i=0; i<star_num; i++ ){
+          st_v[i][0]=3;
+          st_v[i][1]=3;
+        }
+      }
+      else if (e.keyCode == 87) {// w all speed reset 
+        v_init();
+      }
+      else if (48<=e.keyCode && e.keyCode<=52 ) { // color change
+        col_set(e.keyCode-48);
+      }
+      else if (65==e.keyCode  ) {//a  decrease bgalpha
+        if(bg_alpha<0.1)bg_alpha=1.0;
+        else if(bg_alpha<0.2)bg_alpha=0;  
+        else bg_alpha=0.1;
+      }
+      else if (e.keyCode==72 ) {//h  high speed all stars
+        for(var i=0; i<star_num; i++ ){
+          st_v[i][0]*=1.5;
+          st_v[i][1]*=1.5;
+        }
+      }
+      else if (e.keyCode==89 ) {//y  speed down all stars
+        for(var i=0; i<star_num; i++ ){
+          st_v[i][0]*=0.5;
+          st_v[i][1]*=0.5;
+        }
+      }
+      else if (e.keyCode==82 ) {//r  rotation speed down all stars
+        for(var i=0; i<star_num; i++ ){
+          st_rt[i]*=0.5;
+        }
+      }
+      else if (e.keyCode==84 ) {//t  enlarge all stars
+        for(var i=0; i<star_num; i++ ){
+          stars_size[i]*=1.5;
+          for( var t=0; t<10; t++ ) st[i][t]*=1.5;
+        }
+      }
+      else if ( e.keyCode==71 ) {//g   make sammler all stars
+        for(var i=0; i<star_num; i++ ){
+          stars_size[i]*=0.5;
+          for( var t=0; t<10; t++ ) st[i][t]*=0.5;
+        }
+      }
+    });
+
+    $(window).keypress(function(e){ 
+      if (e.keyCode == 112) { //p  add a star
+        add_star();
+      }
+      else if (e.keyCode == 101) { //e  erase a star
+        star_num--;
+      }
+    });
+
+    $(window).on('load resize', function(){
+      width = $("#wrapper").width();
+      height = $("#wrapper").height();
+      $("#cvid").attr({height:$("#wrapper").height()});
+      $("#cvid").attr({width:$("#wrapper").width()});
+      console.log(width,height)
+    });
+
+    var width,height,star_num = 0, init_start_num = 4, cou = 1, star_size = 50, max_v= 10;
+    var st = new Array(star_num), star_pos = new Array(star_num);
+    var stars_size = new Array(star_num);
+    var st_col = new Array(star_num), st_rt=new Array(star_num);
+    var st_v = new Array(star_num);
+    var ctx, cx = width/2, cy=height/2, bg_alpha = 1.0;
+    var cl = new Array(255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255), min = 0.3;
+    var target_star_num = 0, stop = false, rotate_fr = false;
+
+    function init(){
+      width = $("#wrapper").width();
+      height = $("#wrapper").height();
+      $("#cvid").attr({height:$("#wrapper").height()});
+      $("#cvid").attr({width:$("#wrapper").width()});
+
+      var canvas = document.getElementById('cvid');
+      if (canvas.getContext) {
+        ctx = canvas.getContext('2d');
+        star_init();
+        setInterval(draw, 10);
+      }
+    }
+
+    function draw(){
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "rgba(8,8,12,"+bg_alpha+")";
+      ctx.fillRect(0, 0, width, height);
+    
+      for( var i=0; i<star_num; i++ ){
+        ctx.fillStyle = 'rgba(' + st_col[i][0] + ',' + st_col[i][1] + ',' + st_col[i][2] + ',' + st_col[i][3]+')';
+        draw_star(st[i], star_pos[i][0], star_pos[i][1]);
+      }
+      flash(st_col[target_star_num]);
+      if(!stop)move(star_pos, st_v);
+      if(!rotate_fr)rotate(st);
+    }
+   
+    function col_set(val){
+      if(val<4) {
+        for( var i=0; i<star_num; i++ ){
+          st_col[i][0]=Math.floor(cl[val*3+0]*Math.random());
+          st_col[i][1]=Math.floor(cl[val*3+1]*Math.random());
+          st_col[i][2]=Math.floor(cl[val*3+2]*Math.random());
+        }
+      }
+      else {
+        for( var i=0; i<star_num; i++ ){
+          st_col[i][0]=Math.floor(255*Math.random());
+          st_col[i][1]=Math.floor(255*Math.random());
+          st_col[i][2]=Math.floor(255*Math.random());
+        }
+      }
+    }
+
+    function add_star() {
+      star_num++;
+      var cr=star_num-1, cood = new Array(10), angle = 0.4 * Math.PI, rtt = Math.random() * Math.PI;
+      cood[0]=0;
+      cood[1]=Math.random()*star_size;
+
+      for( var i=1; i<5; i++){
+        cood[i*2]  = Math.cos(angle) * cood[(i-1)*2]   - Math.sin(angle) * cood[(i-1)*2+1];
+        cood[i*2+1]= Math.cos(angle) * cood[(i-1)*2+1] + Math.sin(angle) * cood[(i-1)*2];
+      }
+
+      stars_size[cr] = cood[1]; 
+
+      for( var i=0,dx,dy; i<5; i++){
+        dx = cood[i*2];
+        dy = cood[i*2+1];
+        cood[i*2]   = Math.cos(rtt) * dx - Math.sin(rtt) * dy;
+        cood[i*2+1] = Math.cos(rtt) * dy + Math.sin(rtt) * dx;
+      }
+
+      st[cr] = cood;
+      star_pos[cr] = new Array(Math.floor(Math.random() * width), Math.floor(Math.random() * height));
+      
+      var r = Math.floor(Math.random()*255);
+      var g = Math.floor(Math.random()*255);
+      var b = Math.floor(Math.random()*255);
+
+      st_col[cr]=new Array(r,g,b,1.0);        
+      st_rt[cr]=Math.random()*25/180.0 * ( cr%2==0 ? 1:-1 );
+      st_v[cr]=new Array(pm()*Math.random()*5,pm()*Math.random()*5);
+    }
+
+    function flash(col){
+      col[3]+=0.5;
+      if(col[3]>1.0)col[3]=0;
+    }
+
+    function move(cood,v){
+      for(var t=0; t< star_num; t++ ){  
+        cood[t][0]+=v[t][0];
+        cood[t][1]+=v[t][1];
+        
+        if(cood[t][0] - stars_size[t] < 0) {cood[t][0] = stars_size[t]; v[t][0]*=-1;}
+        if(cood[t][1] - stars_size[t] < 0) {cood[t][1] = stars_size[t]; v[t][1]*=-1;}
+        if(cood[t][0] + stars_size[t] > width) {cood[t][0] = width - stars_size[t]; v[t][0]*=-1;}
+        if(cood[t][1] + stars_size[t] > height) {cood[t][1] = height - stars_size[t]; v[t][1]*=-1;}
+      }
+    }  
+
+    function rotate(cood){
+      for( var t=0; t< star_num; t++ ){
+        var angle=st_rt[t];
+        for( var i=0; i<5; i++ ){
+          var x = cood[t][i*2], y = cood[t][i*2+1];
+          cood[t][i*2]   = Math.cos(angle) * x  - Math.sin(angle) * y;
+          cood[t][i*2+1] = Math.cos(angle) * y + Math.sin(angle) * x;
+        }
+      }
+    }
+
+    function star_init(){
+      for( var t=0; t<init_start_num; t++ ) {
+        add_star();
+      }
+    }   
+
+    function pm(){ return Math.random()>0.5 ? 1:-1; }
+
+    function v_init(){
+      for( var i=0; i<star_num; i++ ){
+        st_v[i]=new Array(pm()*Math.random()*max_v,pm()*Math.random()*max_v);
+      }
+    }
+
+    function draw_star(cood,x,y){
+      ctx.beginPath();
+      ctx.moveTo(cood[0] + x, cood[1] + y);
+      ctx.lineTo(cood[4] + x, cood[5] + y); 
+      ctx.lineTo(cood[8] + x, cood[9] + y);
+      ctx.lineTo(cood[2] + x, cood[3] + y);
+      ctx.lineTo(cood[6] + x, cood[7] + y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  </script>
+</head>
+
+<body onload="init();">
+  <center>
+    <div id="wrapper">
+      <canvas id="cvid" ></canvas>
+    </div>
+  </center>
+</body>
+
+</html>
