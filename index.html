@@ -53,6 +53,12 @@
           <h3>web application</h3>
           <ul>
             <li>
+              <a href="https://ytchan.herokuapp.com" target="_blank">Youtubeチャンネルずかん<br>
+		      <img src="./pictures/chzukan.png" width="300" height="180">
+		      </a>
+		      <p>下記のYoutubeAPIを使ったアプリの延長で作ってみた。チャンネルのデータをたくさん取ってきてカテゴライズして並べただけ。またそれぞれのチャンネルで1週間以内に投稿された動画を「最近の動画」として埋め込みで見れるモードも作った。さらに定期的にデータを更新し、twitterで更新内容をつぶやくbotも実装した。全ての主要なチャンネルを網羅しきれているわけではないが、チャンネルの総数は2000くらいなっている。データ収集はPython、フロントはPHPで、Herokuにデプロイした。自動更新はheroku schedulerなるアドオンを使用(無料枠しか使わないがクラカ登録が必要)。Webからもデータの更新をしたかったので、管理者ページから行えるようにした。これは非同期でやりたかったのでReact.jsで。</p>
+			</li>
+            <li>
               <a href="./ytapp/ytviewer.html" target="_blank">Simple Youtube viewer<br>
 		      <img src="./pictures/ytviewer.png" width="300" height="180">
 		      </a>
